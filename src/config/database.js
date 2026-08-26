@@ -8,8 +8,3 @@ const dbConnect = async () =>{
 
 module.exports = dbConnect;
 
-// dbConnect().then(()=>{
-//     console.log('Database connected successfully!');
-// }).catch((err)=>{
-//     console.log('Database connection failed!',err);
-// });
