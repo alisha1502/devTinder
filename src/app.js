@@ -17,6 +17,83 @@ try{
 }
 });
 
+//finding users with same emailId
+app.get("/users", async (req, res) => {
+  try {
+    const users = await User.findOne({emailId: req.body.emailId});
+    if (users) {
+      res.json(users);
+    } else {
+      res.status(404).send("User not found");
+    }
+  } catch (err) {
+    res.status(500).send("Error fetching user: " + err.message);
+  }
+});
+
+//returning all the users
+app.get('/feed', async (req, res)=>{
+  try{
+    const users = await User.find({});
+    if(users){
+      res.send(users);
+    }else{
+      res.status(404).send("No users found");
+    }
+  }catch(err){
+    res.status(500).send("Error fetching users: " + err.message);
+  }
+})
+
+//delete a user
+app.delete('/user', async (req, res)=>{
+  const userId = req.body.userId;
+  try{
+    const user = await User.findByIdAndDelete(userId);
+    if(user){
+      res.send("User deleted successfully");
+    }else{
+      res.status(404).send("User not found");
+    } 
+
+  }catch(err){
+    res.status(500).send("Error deleting user: " + err.message);
+  }
+
+})
+
+//updating a user
+app.patch('/user', async (req, res)=>{
+  const userId = req.body.userId;
+  const updateData = req.body;
+  console.log("Updating user with ID:", userId, "with data:", updateData,); // Log the userId and updateData to see what is being sent
+  try{
+    const updatedUser = await User.findByIdAndUpdate(userId, updateData, {returnDocument: 'after'});
+    if(updatedUser){
+      res.send(updatedUser);
+    }else{
+      res.status(404).send("User not found");
+    }
+  }catch(err){
+    res.status(500).send("Error updating user: " + err.message);
+  }
+})
+
+//updating a user with emailId instead of userId
+app.patch('/updateUserByEmail', async (req, res)=>{
+  const emailId = req.body.emailId;
+  const updateData = req.body;
+  try{
+    const updatedUser = await User.findOneAndUpdate({emailId: emailId}, updateData, {returnDocument: 'after'});
+    if(updatedUser){
+      res.send(updatedUser);    
+  }else{
+      res.status(404).send("User not found");
+    }
+  }catch(err){
+    res.status(500).send("Error updating user: " + err.message);
+  } 
+})
 dbConnect()
   .then(() => {
     console.log("Database connected successfully!");
