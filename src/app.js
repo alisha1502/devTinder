@@ -68,7 +68,7 @@ app.patch('/user', async (req, res)=>{
   const updateData = req.body;
   console.log("Updating user with ID:", userId, "with data:", updateData,); // Log the userId and updateData to see what is being sent
   try{
-    const updatedUser = await User.findByIdAndUpdate(userId, updateData, {returnDocument: 'after'});
+    const updatedUser = await User.findByIdAndUpdate(userId, updateData, {returnDocument: 'after', runValidators: true});
     if(updatedUser){
       res.send(updatedUser);
     }else{
