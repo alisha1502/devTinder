@@ -2,18 +2,19 @@ const express = require("express");
 const dbConnect = require("./config/database"); // Import the database connection module
 const app = express();
 const User = require("./models/user"); // Import the User model
+const { validateSignUpData, validateEditUserData } = require("./utils/validation");
 
 app.use(express.json()); // Middleware to parse JSON request bodies
 
 
 app.post("/signup", async (req, res) => {
-  const user = new User(req.body);
-
 try{
+  validateSignUpData(req);
+  const user = new User(req.body);
   await user.save();
   res.send("User signed up successfully!");
 }catch(err){
-  res.status(500).send("Error signing up user: " + err.message);
+  res.status(400).send("Error signing up user: " + err.message);
 }
 });
 
@@ -66,8 +67,10 @@ app.delete('/user', async (req, res)=>{
 app.patch('/user', async (req, res)=>{
   const userId = req.body.userId;
   const updateData = req.body;
-  console.log("Updating user with ID:", userId, "with data:", updateData,); // Log the userId and updateData to see what is being sent
   try{
+    if (!validateEditUserData(req)) {
+      throw new Error('Update not allowed on these fields');
+    }
     const updatedUser = await User.findByIdAndUpdate(userId, updateData, {returnDocument: 'after', runValidators: true});
     if(updatedUser){
       res.send(updatedUser);
@@ -75,7 +78,7 @@ app.patch('/user', async (req, res)=>{
       res.status(404).send("User not found");
     }
   }catch(err){
-    res.status(500).send("Error updating user: " + err.message);
+    res.status(400).send("Error updating user: " + err.message);
   }
 })
 
