@@ -3,6 +3,7 @@ const dbConnect = require("./config/database"); // Import the database connectio
 const app = express();
 const User = require("./models/user"); // Import the User model
 const { validateSignUpData, validateEditUserData } = require("./utils/validation");
+const bycrypt = require("bcrypt");
 
 app.use(express.json()); // Middleware to parse JSON request bodies
 
@@ -10,12 +11,34 @@ app.use(express.json()); // Middleware to parse JSON request bodies
 app.post("/signup", async (req, res) => {
 try{
   validateSignUpData(req);
-  const user = new User(req.body);
+  const hashedPassword = await bycrypt.hash(req.body.password, 10);
+  const user = new User({
+    firstName: req.body.firstName,
+    lastName: req.body.lastName,
+    emailId: req.body.emailId,
+    password: hashedPassword
+  });
   await user.save();
   res.send("User signed up successfully!");
 }catch(err){
   res.status(400).send("Error signing up user: " + err.message);
 }
+});
+
+app.post("/login", async (req, res) => {
+  try {
+    const user = await User.findOne({ emailId: req.body.emailId });
+    if (!user) {
+      return res.status(404).send("User not found");
+    }
+    const isPasswordValid = await bycrypt.compare(req.body.password, user.password);
+    if (!isPasswordValid) {
+      return res.status(401).send("Invalid credentials");
+    }
+    res.send("Login successful!");
+  } catch (err) {
+    res.status(500).send("Error during login: " + err.message);
+  }
 });
 
 //finding users with same emailId
