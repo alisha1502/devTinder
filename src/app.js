@@ -6,6 +6,7 @@ const { validateSignUpData, validateEditUserData } = require("./utils/validation
 const bycrypt = require("bcrypt");
 const cookieParser = require('cookie-parser');
 const jwt = require('jsonwebtoken');
+const {userAuth} = require('./middlewares/auth')
 
 app.use(express.json()); // Middleware to parse JSON request bodies
 app.use(cookieParser());
@@ -37,9 +38,9 @@ app.post("/login", async (req, res) => {
     const isPasswordValid = await bycrypt.compare(req.body.password, user.password);
     if(isPasswordValid){
       //create JWT Token
-      const token = jwt.sign({_id: user._id}, "DEVTinder$346#")
+      const token = jwt.sign({_id: user._id}, "DEVTinder$346#",{ expiresIn: '8h' })
       //Add a token to a cookie and sent back to user
-      res.cookie("token", token);
+      res.cookie("token", token, {expires: new Date(Date.now() + 8 * 3600000)});
       res.send("Login successful!");
     }else{
       return res.status(401).send("Invalid credentials");
@@ -50,28 +51,19 @@ app.post("/login", async (req, res) => {
   }
 });
 
-app.get("/profile", async(req, res) => {
+app.get("/profile", userAuth, async(req, res) => {
   try {
-    const cookies = req.cookies;
-    const {token} = cookies
-
-    if(!token){
-      throw new Error("Invalid token");
-    }
-
-    //validate the token
-    const decodedMessage = jwt.verify(token, "DEVTinder$346#")
-    const {_id} = decodedMessage
-
-    const user = await User.findById(_id);
-    if(!user){
-      throw new Error("User doesn't exist")
-    }
+    const user = req.user;
     res.send(user)
   }catch(err){
     res.status(500).send("Error fetching users: " + err.message);
   }
 });
+
+app.post("/sendConnectionReq", userAuth, async(req,res) =>{
+  const user = req.user
+  res.send(user.firstName + " has successfully sent the connect request")
+})
 
 //finding users with same emailId
 app.get("/users", async (req, res) => {
