@@ -4,8 +4,11 @@ const app = express();
 const User = require("./models/user"); // Import the User model
 const { validateSignUpData, validateEditUserData } = require("./utils/validation");
 const bycrypt = require("bcrypt");
+const cookieParser = require('cookie-parser');
+const jwt = require('jsonwebtoken');
 
 app.use(express.json()); // Middleware to parse JSON request bodies
+app.use(cookieParser());
 
 
 app.post("/signup", async (req, res) => {
@@ -32,12 +35,41 @@ app.post("/login", async (req, res) => {
       return res.status(404).send("User not found");
     }
     const isPasswordValid = await bycrypt.compare(req.body.password, user.password);
-    if (!isPasswordValid) {
+    if(isPasswordValid){
+      //create JWT Token
+      const token = jwt.sign({_id: user._id}, "DEVTinder$346#")
+      //Add a token to a cookie and sent back to user
+      res.cookie("token", token);
+      res.send("Login successful!");
+    }else{
       return res.status(401).send("Invalid credentials");
     }
-    res.send("Login successful!");
+    
   } catch (err) {
     res.status(500).send("Error during login: " + err.message);
+  }
+});
+
+app.get("/profile", async(req, res) => {
+  try {
+    const cookies = req.cookies;
+    const {token} = cookies
+
+    if(!token){
+      throw new Error("Invalid token");
+    }
+
+    //validate the token
+    const decodedMessage = jwt.verify(token, "DEVTinder$346#")
+    const {_id} = decodedMessage
+
+    const user = await User.findById(_id);
+    if(!user){
+      throw new Error("User doesn't exist")
+    }
+    res.send(user)
+  }catch(err){
+    res.status(500).send("Error fetching users: " + err.message);
   }
 });
 
