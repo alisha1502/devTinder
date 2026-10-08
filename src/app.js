@@ -35,10 +35,10 @@ app.post("/login", async (req, res) => {
     if (!user) {
       return res.status(404).send("User not found");
     }
-    const isPasswordValid = await bycrypt.compare(req.body.password, user.password);
+    const isPasswordValid = await user.validatePassword(req.body.password)
     if(isPasswordValid){
       //create JWT Token
-      const token = jwt.sign({_id: user._id}, "DEVTinder$346#",{ expiresIn: '8h' })
+      const token = await user.getJWT()
       //Add a token to a cookie and sent back to user
       res.cookie("token", token, {expires: new Date(Date.now() + 8 * 3600000)});
       res.send("Login successful!");
