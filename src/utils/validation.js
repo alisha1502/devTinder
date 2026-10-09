@@ -29,18 +29,26 @@ const validateSignUpData = (req) => {
   }
 };
 
-const validateEditUserData = (req) => {
-  const allowedUpdates = [
-    'firstName',
+
+const validateProfileEditData = (req) => {
+  const allowedFieldEdit = ['firstName',
     'lastName',
     'age',
     'gender',
     'skills',
     'profilePicture',
     'bio',
-  ];
+  ]
 
-  return Object.keys(req.body).every((field) => allowedUpdates.includes(field));
+  const isEditAllowed = Object.keys(req.body).every((key) => allowedFieldEdit.includes(key));
+
+  return isEditAllowed
+}
+
+const validateStrongPassword = (password) => {
+  if (!password || !validator.isStrongPassword(password, passwordRules)) {
+    throw new Error(passwordRequirementMessage);
+  }
 };
 
-module.exports = { validateSignUpData, validateEditUserData };
+module.exports = { validateSignUpData, validateProfileEditData, validateStrongPassword };
